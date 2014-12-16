@@ -35,7 +35,8 @@ libions_a_SOURCES =         \
 	ion_dynamics.F90    \
 	symmetries.F90      \
 	symmetries_finite.c \
-        spglib_f.c
+  spglib_f.c          \
+  metric.F90
 
 noinst_HEADERS =
 
@@ -58,3 +59,4 @@ ion_dynamics.o : ion_dynamics.F90 simul_box.o geometry.o read_coords.o
 symmetries.o : symmetries.F90 geometry.o
 symmetries_finite.o : symmetries_finite.c
 spglib_f.o : spglib_f.c
+metric.o : geometry.o
