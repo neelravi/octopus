@@ -61,6 +61,32 @@ contains
     
     this%br_vecs(1:3)   = M_ONE
     this%br_angles(1:3) = M_PI*M_HALF
+ 
+   !%Variable BravaisLattice 
+  !%Type integer
+  !%Default cubic_primitive
+  !%Section Mesh Simulation Box
+  !%Description
+  !% Keyword for calculations on periodic systems. Sets up Bravais Lattice index, and builds 
+  !% the lattice vectors accordingly.
+  !%Option cubic_primitive 01
+  !% Simple Cubic system.                 v1 = a(1,0,0),       v2 = a(0,1,0),      v3 = a(0,0,1)
+  !%Option cubic_face_centered 02
+  !% Face Centered Cubic system.          v1 = (a/2)(-1,0,1),  v2 = (a/2)(0,1,1),  v3 = (a/2)(-1,1,0)
+  !%Option cubic_body_centered 03
+  !% Body Centered Cubic system           v1 = (a/2)(1,1,1),   v2 = (a/2)(-1,1,1), v3 = (a/2)(-1,-1,1)
+  !%Option hexagonal 05
+  !% Hexagonal Lattice, Lattice constants a = b, c, v1 = a(1,0,0),  v2 = a(-1/2,sqrt(3)/2,0),  v3 = a(0,0,c/a)
+  !% Example:
+  !% <pre>%CalculationMode
+  !%  gs              | unocc
+  !%  "ground_state_" | "excited_states_"
+  !%  1               | 2
+  !% %
+  !% excited_states_RestartDir = "ground_state_restart"
+  !% excited_states_ExtraStates = 9
+  !% </pre>
+  !%End
 
 
     POP_SUB(metric_init)
