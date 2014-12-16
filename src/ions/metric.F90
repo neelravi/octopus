@@ -166,7 +166,7 @@ contains
     POP_SUB(metric_write_info)
   end subroutine metric_write_info
   
-
+end module metric_m
 
 !! Local Variables:
 !! mode: f90
