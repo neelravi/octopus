@@ -77,6 +77,30 @@ contains
   !% Body Centered Cubic system           v1 = (a/2)(1,1,1),   v2 = (a/2)(-1,1,1), v3 = (a/2)(-1,-1,1)
   !%Option hexagonal 05
   !% Hexagonal Lattice, Lattice constants a = b, c, v1 = a(1,0,0),  v2 = a(-1/2,sqrt(3)/2,0),  v3 = a(0,0,c/a)
+  !%Option tetragonal_primitive 06
+  !% Simple tetragonal system.            v1 = a(1,0,0),  v2 = a(0,1,0),  v3 = a(0,0,c/a)
+  !%Option tetragonal_body_centered 07
+  !% Body centered tetragonal system.     v1=(a/2)(1,-1,c/a),  v2=(a/2)(1,1,c/a),  v3=(a/2)(-1,-1,c/a)
+  !%Option orthorhombic_primitive  08
+  !% Simple (P) orthorhomic system;   Lat. const. a != b != c,   v1 = (a,0,0),  v2 = (0,b,0), v3 = (0,0,c)         
+  !%Option orthorhombic_base_centered 09
+  !% Base centered Orthorhombic;          v1 = (a/2, b/2,0),  v2 = (-a/2,b/2,0),  v3 = (0,0,c)
+  !%Option orthorhombic_face_centered 10
+  !% Face centered orthorhombic system.     v1 = (a/2,0,c/2),  v2 = (a/2,b/2,0),  v3 = (0,b/2,c/2)
+  !%Option orthorhombic_body_centered 11
+  !% Body centered orthorhombic system.     v1=(a/2,b/2,c/2),  v2=(-a/2,b/2,c/2),  v3=(-a/2,-b/2,c/2)
+  !%Option monoclinic_primitive  12
+  !%  monoclinic simple (P)                v1=(a,0,0), v2=(b*cos(gamma),b*sin(gamma),0),  v3 = (0,0,c)
+  !%Option monoclinic_base_centered 13
+  !% Base centered monoclinic;             v1 = (  a/2,         0,                -c/2),
+  !%                                       v2 = (b*cos(gamma),  b*sin(gamma),        0),
+  !%                                       v3 = (  a/2,         0,                  c/2),
+  !%Option triclinic 14
+  !% triclinic; the most general lattice;  v1 = (a, 0, 0),
+  !%                                       v2 = (b*cos(gamma), b*sin(gamma), 0)
+  !%                                       v3 = (c*cos(beta),  c*(cos(alpha)-cos(beta)cos(gamma))/sin(gamma),
+  !%                                            c*sqrt( 1 + 2*cos(alpha)cos(beta)cos(gamma)
+  !%                                            - cos(alpha)^2-cos(beta)^2-cos(gamma)^2 )/sin(gamma) )
   !% Example:
   !% <pre>%CalculationMode
   !%  gs              | unocc
