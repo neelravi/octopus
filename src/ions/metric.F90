@@ -62,7 +62,7 @@ contains
     this%br_vecs(1:3)   = M_ONE
     this%br_angles(1:3) = M_PI*M_HALF
  
-   !%Variable BravaisLattice 
+  !%Variable BravaisLattice 
   !%Type integer
   !%Default cubic_primitive
   !%Section Mesh Simulation Box
