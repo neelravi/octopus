@@ -35,7 +35,7 @@ module metric_m
   implicit none
   
   private
-  
+    integer   ::  i
   public ::                       &
     metric_t,                     & 
     metric_init,                  &
@@ -56,10 +56,8 @@ contains
 
     PUSH_SUB(metric_init)
 
-    this%tensor(:,:) = M_ZERO 
-    this%tensor(1,1) = M_ONE
-    this%tensor(2,2) = M_ONE
-    this%tensor(3,3) = M_ONE
+    this%tensor = M_ZERO 
+    forall(i=1:3) this%tensor(i:i) = M_ONE
     
     this%br_vecs(1:3)   = M_ONE
     this%br_angles(1:3) = M_PI*M_HALF
