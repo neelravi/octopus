@@ -130,6 +130,29 @@ contains
    enddo
    
 
+  ! Following part will describe the transformation matrix A that transforms the
+  ! coordinates from simple Cartesian to the lattice coordinates. We will enlist
+  ! the matrices for all types of bravais lattices. 
+ 
+  ! NOTE: following matrices will be called depending upon the geometry read in
+  ! the input file. So I am naming the matrix A the same in every sub part that
+  ! follows. (this will be moved to appropriate subroutine at the end if
+  ! desired) Matrix B is the the inverse of matrix A; F = B*B(tran)
+
+  ! Case 1: Simple Cubic. There is no tranformation needed. Hence the
+  ! transformation matrix is the unit matrix.
+
+   A = 0.d0 ; Do i = 1 , 3 ;  A(i,i)  = 1.d0 ;   enddo ; B = A
+
+  ! Case 2: Face Centered Cubic.
+
+   A = 0.d0 ; forall (i .ne. j) A(i,j) = 1.d0/sqrt(2.d0)
+
+   B = -1.d0/sqrt(2.d0) ; forall (i .ne. j) B(i,j) = 1.d0/sqrt(2.d0)
+
+   F = 3.d0/2.d0 ; forall (i .ne. j) F(i,j) = -1.d0/2.d0
+
+  ! laplacian coefficients to be added
 
     POP_SUB(metric_init)
   end subroutine metric_init
