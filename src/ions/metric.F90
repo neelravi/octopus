@@ -35,7 +35,7 @@ module metric_m
   implicit none
 
   private
-    integer   ::  i
+    integer   ::  i, j
   public ::                       &
     metric_t,                     &
     metric_init,                  &
@@ -57,7 +57,7 @@ contains
     PUSH_SUB(metric_init)
 
     this%tensor = M_ZERO
-    forall(i=1:3) this%tensor(i:i) = M_ONE
+!    forall(i=1:3) this%tensor(i:i) = 1.0d0
 
     this%br_vecs(1:3)   = M_ONE
     this%br_angles(1:3) = M_PI*M_HALF
@@ -94,7 +94,7 @@ contains
   !%Option monoclinic_base_centered 13
   !% Base centered monoclinic;             v1 = (  a/2,         0,                -c/2),
   !%                                       v2 = (b*cos(gamma),  b*sin(gamma),        0),
-  !%                                       v3 = (  a/2,         0,                  c/2),
+  !%                                       v3 = (  a/2,         0,                 c/2),
   !%Option triclinic 14
   !% triclinic; the most general lattice;  v1 = (a, 0, 0),
   !%                                       v2 = (b*cos(gamma), b*sin(gamma), 0)
@@ -109,13 +109,34 @@ contains
   !% </pre>
   !%End
 
+  ! Following tensor will be used for various transformations of lattice vectors
+
+  this%tensor(1,1) =  this%br_vecs(1)*this%br_vecs(1)
+  this%tensor(1,2) =  this%br_vecs(1)*this%br_vecs(2)*cos(this%br_angles(3))
+  this%tensor(1,3) =  this%br_vecs(1)*this%br_vecs(3)*cos(this%br_angles(2))
+  this%tensor(2,1) =  this%br_vecs(1)*this%br_vecs(2)*cos(this%br_angles(3))
+  this%tensor(2,2) =  this%br_vecs(2)*this%br_vecs(2)
+  this%tensor(2,3) =  this%br_vecs(2)*this%br_vecs(3)*cos(this%br_angles(1))
+  this%tensor(3,1) =  this%br_vecs(1)*this%br_vecs(3)*cos(this%br_angles(2))
+  this%tensor(3,2) =  this%br_vecs(2)*this%br_vecs(3)*cos(this%br_angles(1))
+  this%tensor(3,3) =  this%br_vecs(3)*this%br_vecs(3)
+
+   ! check inserted by ravindra, print the metric tensor and the lattice vectors
+
+   write(*,*) "printing metric tensor "
+
+   Do i = 1, 3
+      write(*,*) (this%tensor(i,j),j=1,3)
+   enddo
+   
+
 
     POP_SUB(metric_init)
   end subroutine metric_init
 
   ! ---------------------------------------------------------
   subroutine metric_end(this)
-    type(kpoints_grid_t), intent(inout) :: this
+    type(metric_t), intent(inout) :: this
 
     PUSH_SUB(metric_end)
 
@@ -126,8 +147,8 @@ contains
 
   ! ---------------------------------------------------------
   subroutine metric_copy(bb, aa)
-    type(kpoints_grid_t), intent(in)  :: bb
-    type(kpoints_grid_t), intent(out) :: aa
+    type(metric_t), intent(in)  :: bb
+    type(metric_t), intent(out) :: aa
 
     PUSH_SUB(metric_copy)
 
@@ -141,7 +162,7 @@ contains
 
   ! ---------------------------------------------------------
   subroutine metric_write_info(this, iunit)
-    type(kpoints_t),    intent(in) :: this
+    type(metric_t),    intent(in) :: this
     integer,            intent(in) :: iunit
 
     integer :: ik, idir
@@ -149,64 +170,6 @@ contains
     character :: index
 
     PUSH_SUB(metric_write_info)
-
-    call messages_print_stress(iunit, 'Brillouin zone sampling')
-
-    if(this%method == KPOINTS_MONKH_PACK) then
-
-      call messages_write('Dimensions of the k-point grid      =')
-      do idir = 1, this%full%dim
-        call messages_write(this%nik_axis(idir), fmt = '(i3,1x)')
-      end do
-      call messages_new_line()
-
-      call messages_write('Total number of k-points            =')
-      call messages_write(this%full%npoints)
-      call messages_new_line()
-
-      call messages_write('Number of symmetry-reduced k-points =')
-      call messages_write(this%reduced%npoints)
-
-      call messages_info(iunit = iunit)
-
-    else
-
-      call messages_write('Total number of k-points            =')
-      call messages_write(this%full%npoints)
-      call messages_new_line()
-      call messages_info(iunit = iunit)
-
-    endif
-
-    call messages_new_line()
-    call messages_write('List of k-points:')
-    call messages_info(iunit = iunit)
-
-    write(message(1), '(6x,a)') 'ik'
-    do idir = 1, this%full%dim
-      index = index2axis(idir)
-      write(str_tmp, '(9x,2a)') 'k_', index
-      message(1) = trim(message(1)) // trim(str_tmp)
-    enddo
-    write(str_tmp, '(6x,a)') 'Weight'
-    message(1) = trim(message(1)) // trim(str_tmp)
-    message(2) = '---------------------------------------------------------'
-    call messages_info(2, iunit)
-
-    do ik = 1, kpoints_number(this)
-      write(message(1),'(i8,1x)') ik
-      do idir = 1, this%full%dim
-        write(str_tmp,'(f12.4)') this%reduced%red_point(idir, ik)
-        message(1) = trim(message(1)) // trim(str_tmp)
-      enddo
-      write(str_tmp,'(f12.4)') kpoints_get_weight(this, ik)
-      message(1) = trim(message(1)) // trim(str_tmp)
-      call messages_info(1, iunit)
-    end do
-
-    call messages_info(iunit = iunit)
-
-    call messages_print_stress(iunit)
 
     POP_SUB(metric_write_info)
   end subroutine metric_write_info
