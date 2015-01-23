@@ -35,7 +35,10 @@ module metric_m
   implicit none
 
   private
-    integer   ::  i, j
+    integer   ::  i, j, info
+    real*8,   ::  WORK(3)               ! temporary array for matrix inversion
+    real*8,   ::  IPIV(3)               ! temporary array for matrix inversion
+
   public ::                       &
     metric_t,                     &
     metric_init,                  &
@@ -75,6 +78,12 @@ contains
   !% Face Centered Cubic system.          v1 = (a/2)(-1,0,1),  v2 = (a/2)(0,1,1),  v3 = (a/2)(-1,1,0)
   !%Option cubic_body_centered 03
   !% Body Centered Cubic system           v1 = (a/2)(1,1,1),   v2 = (a/2)(-1,1,1), v3 = (a/2)(-1,-1,1)
+  !%Option Triagonal 04
+  !% Triagonal (primitive cell is a simple rhombohedron) 
+  !% v1 = a(tx,-ty,tz),   v2 = a(0,2ty,tz),   v3 = a(-tx,-ty,tz)
+  !%    where c=cos(alpha) is the cosine of the angle alpha between
+  !%    any pair of crystallographic vectors, tx, ty, tz are:
+  !%      tx=sqrt((1-c)/2), ty=sqrt((1-c)/6), tz=sqrt((1+2c)/3) 
   !%Option hexagonal 05
   !% Hexagonal Lattice, Lattice constants a = b, c, v1 = a(1,0,0),  v2 = a(-1/2,sqrt(3)/2,0),  v3 = a(0,0,c/a)
   !%Option tetragonal_primitive 06
@@ -142,17 +151,128 @@ contains
   ! Case 1: Simple Cubic. There is no tranformation needed. Hence the
   ! transformation matrix is the unit matrix.
 
-   A = 0.d0 ; Do i = 1 , 3 ;  A(i,i)  = 1.d0 ;   enddo ; B = A
+   A = 0.d0 ; Do i = 1 , 3 ;  A(i,i)  = 1.d0 ;   enddo ; B = A ; F = A
 
   ! Case 2: Face Centered Cubic.
 
-   A = 0.d0 ; forall (i .ne. j) A(i,j) = 1.d0/sqrt(2.d0)
+   A = 0.d0 ; forall (i=1:3, j=1:3, i .ne. j) A(i,j) = 1.d0/sqrt(2.d0)
 
-   B = -1.d0/sqrt(2.d0) ; forall (i .ne. j) B(i,j) = 1.d0/sqrt(2.d0)
+   B = -1.d0/sqrt(2.d0) ; forall (i=1:3, j=1:3, i .ne. j) B(i,j) = 1.d0/sqrt(2.d0)
 
-   F = 3.d0/2.d0 ; forall (i .ne. j) F(i,j) = -1.d0/2.d0
+   F = 3.d0/2.d0 ; forall (i=1:3, j=1:3, i .ne. j) F(i,j) = -1.d0/2.d0
 
-  ! laplacian coefficients to be added
+
+  
+  ! Case 3: Body Centered Cubic
+
+   A = 1.d0 ; forall (i=1:3, j=1:3, i .eq. j) A(i,j) = -1.d0
+
+   F = 3.d0/2.d0 ; forall (i=1:3, j=1:3, i .ne. j) F(i,j) = -1.d0/2.d0
+  
+
+  ! Case 5: Hexagonal Lattice
+   A = 0.d0 ; A(1,1) = 1.d0; A(1,2) = 0.5d0 ; A(2,2) = sqrt(3.d0)/0.5d0 ; A(3,3) = 1.d0
+   
+   F = 0.d0 ; F(1,1) = 4.d0/3.d0 ; F(2,2) =  4.d0/3.d0 ; F(1,2) = -2.d0/3.d0 ; F(2,1) =  -2.d0/3.d0
+
+  ! Case 6: Tetragonal_primitive
+
+   A = 0.d0 ; Do i = 1 , 3 ;  A(i,i)  = 1.d0 ;   enddo ; B = A ; F = A
+
+
+  ! Case 7: Tetragonal Body Centered
+
+   factor = a*0.5d0/(sqrt(0.5*a*a+0.25*c*c))
+   
+   A(1,1) = 1.d0;       A(1,2) = 1.d0;    A(1,3) = -1.d0
+   A(2,1) = -1.d0;      A(2,2) = 1.d0;    A(2,3) = -1.d0
+   A(3,1) = c/a;        A(3,2) = c/a;     A(3,3) = c/a
+
+   A = factor*A
+
+     call DGETRF(3,3,A,3,IPIV,info)
+     call DGETRI(3,A,3,IPIV,WORK,3,info)
+  
+   F = matmul(A,transpose(A)) 
+
+  ! Case 8: Simple Orthorhombic primitiv (P) 
+   
+    A = 0.d0 ; Do i = 1 , 3 ;  A(i,i)  = 1.d0 ;   enddo ; B = A ; F = A
+
+  ! Case 9: Base Centered Orthorhombic 
+
+   factor = 1.d0/(sqrt(a*a+b*b))
+   
+   A(1,1) = a;        A(1,2) = -1.d0*a;    A(1,3) = 0.d0
+   A(2,1) = b;        A(2,2) = b;          A(2,3) = 0.d0
+   A(3,1) = 0.d0;        A(3,2) = 0.d0;    A(3,3) = sqrt(a*a+b*b)
+
+   A = factor*A
+
+     call DGETRF(3,3,A,3,IPIV,info)
+     call DGETRI(3,A,3,IPIV,WORK,3,info)
+
+   F = matmul(A,transpose(A))
+
+  ! Case 10: Face centered orthorhombic 
+   
+   A(1,1) = a/(sqrt(a*a+c*c)) ; A(1,2) = a/(sqrt(a*a+c*c)) ; A(1,3) = 0.d0
+   A(2,1) = 0.d0              ; A(2,2) = b/(sqrt(a*a+b*b)) ; A(2,3) = b/(sqrt(b*b+c*c))
+   A(3,1) = c/(sqrt(a*a+c*c)) ; A(3,2) = 0.d0              ; A(3,3) = c/(sqrt(b*b+c*c))
+
+     call DGETRF(3,3,A,3,IPIV,info)
+     call DGETRI(3,A,3,IPIV,WORK,3,info)
+
+   F = matmul(A,transpose(A))
+
+  ! Case 11: Body Centered orthorhombic
+
+  factor = 1.d0/(sqrt(a*a+b*b+c*c))
+
+   A(1,1) = a ; A(1,2) = -a      ; A(1,3) = -a
+   A(2,1) = b ; A(2,2) = b       ; A(2,3) = -b
+   A(3,1) = c ; A(3,2) = c       ; A(3,3) = c
+
+     call DGETRF(3,3,A,3,IPIV,info)
+     call DGETRI(3,A,3,IPIV,WORK,3,info)
+
+   F = matmul(A,transpose(A))
+ 
+  ! case 12: Monoclinic primitiv
+   
+   A(1,1) = 1.d0 ; A(1,2) = cos(gamma)  ; A(1,3) = 0.d0
+   A(2,1) = 0.d0 ; A(2,2) = sin(gamma)  ; A(2,3) = 0.d0
+   A(3,1) = 0.d0 ; A(3,2) = 0.d0        ; A(3,3) = 1.d0
+
+     call DGETRF(3,3,A,3,IPIV,info)
+     call DGETRI(3,A,3,IPIV,WORK,3,info)
+
+   F = matmul(A,transpose(A))
+
+ ! Case 13: Base centered monoclinic
+   A(1,1) = a                 ; A(1,2) = 0.d0  ; A(1,3) = -c/(sqrt(2.d0))
+   A(2,1) = 2.d0*b*cos(gamma) ; A(2,2) = 1.d0  ; A(2,3) = 0.d0
+   A(3,1) = a                 ; A(3,2) = 0.d0  ; A(3,3) = c/(sqrt(2.d0))
+
+     call DGETRF(3,3,A,3,IPIV,info)
+     call DGETRI(3,A,3,IPIV,WORK,3,info)
+
+   F = matmul(A,transpose(A))
+ 
+
+ ! Case 14: Triclinic
+   A(1,1) = 1.d0 ; A(1,2) = cos(gamma)  ; A(1,3) = cos(beta)
+   A(2,1) = 0.d0 ; A(2,2) = sin(gamma)  ; A(2,3) = (cos(alpha)-cos(beta)*cos(gamma))/sin(gamma)
+   A(3,1) = 0.d0 ; A(3,2) = 0.d0        ; A(3,3) = sqrt(1.d0+2*cos(alpha)*cos(beta)*cos(gamma)  & 
+                     -cos(alpha)*cos(alpha)-cos(beta)*cos(beta)-cos(gamma)*cos(gamma))/sin(gamma)
+
+     call DGETRF(3,3,A,3,IPIV,info)
+     call DGETRI(3,A,3,IPIV,WORK,3,info)
+
+   F = matmul(A,transpose(A))
+
+
+!  Cases of all Bravais Lattices end here
 
     POP_SUB(metric_init)
   end subroutine metric_init
